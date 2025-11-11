@@ -53,6 +53,11 @@ class UserController extends Controller
 
         $data['password'] = hash('sha256', $data['password']);
         $user = User::create($data);
+        // preference
+        $user->preference->create([
+            'email' => true,
+            'push' => true
+        ]);
         return $this->sendSuccess('User created successfully', $user, 201);
     }
 
@@ -83,9 +88,17 @@ class UserController extends Controller
             'name' => 'sometimes|required|string|max:255',
             'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $id,
             'password' => 'sometimes|required|string|min:8',
+            'push_token' => 'string',
+            'preference' => 'array',
+            'preference.email' => 'nullable|boolean',
+            'preference.push' => 'nullable.boolean',
         ]);
 
         $user->update($data);
+        if ($data['preference']) {
+            # code...
+            $user->preference->update($data['preference']);
+        }
         return $this->sendSuccess('User updated successfully', $user);
     }
 
