@@ -1,0 +1,99 @@
+# Dockerfile.prod - Production-ready multi-stage build for Laravel (PHP-FPM + built assets)
+# Adjust PHP version, node version, and package lists to match your app requirements.
+
+# 1) Build frontend assets with Node
+FROM node:18-alpine AS assets
+WORKDIR /app
+# copy package files and vite/mix config first for better caching
+COPY package*.json ./
+COPY vite.config.* ./
+# copy only resources used for the build
+COPY resources resources
+# If your build reads from other paths (e.g. tailwind config), copy them too:
+COPY postcss.config.* ./
+RUN npm ci --silent
+RUN npm run build
+
+# 2) Install PHP dependencies using Composer image (separate to keep final image small)
+FROM composer:2 AS vendor
+WORKDIR /app
+COPY composer.json composer.lock ./
+# install vendor --no-dev and optimized autoloader
+RUN composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction --no-progress --no-scripts
+# copy any files needed by post-install scripts (optional)
+COPY . .
+# run composer scripts if your app requires them (optional)
+# RUN composer run-script post-install-cmd || true
+
+# 3) Final runtime image (PHP-FPM)
+FROM php:8.2-fpm-alpine AS runtime
+
+# System deps for typical Laravel apps (adjust as needed)
+RUN apk add --no-cache \
+    bash \
+    git \
+    curl \
+    libzip-dev \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
+    icu-dev \
+    zlib-dev \
+    oniguruma-dev \
+    tzdata
+
+# PHP extensions required by Laravel & common packages
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+ && docker-php-ext-install -j$(nproc) pdo pdo_mysql gd zip intl opcache
+
+# Optional: enable opcache recommended production settings
+COPY --from=vendor /app /tmp/app-skel
+RUN { \
+    echo "opcache.memory_consumption=128"; \
+    echo "opcache.interned_strings_buffer=8"; \
+    echo "opcache.max_accelerated_files=10000"; \
+    echo "opcache.revalidate_freq=0"; \
+    echo "opcache.validate_timestamps=0"; \
+} > /usr/local/etc/php/conf.d/opcache-recommended.ini
+
+# Create app directory
+ENV APP_HOME=/var/www/html
+WORKDIR $APP_HOME
+
+# Copy application code (excluding vendor to keep vendor from composer stage)
+# Note: .dockerignore should exclude node_modules, vendor, .env, tests, etc.
+COPY --chown=www-data:www-data . $APP_HOME
+
+# Replace/copy vendor from vendor stage
+COPY --from=vendor /app/vendor $APP_HOME/vendor
+COPY --from=vendor /app/composer.lock $APP_HOME/composer.lock
+COPY --from=vendor /app/vendor-bin $APP_HOME/vendor-bin || true
+
+# Copy built frontend assets from assets stage (adjust destination if your build outputs elsewhere)
+# Common Vite output: public/build
+COPY --from=assets /app/public ./public
+
+# Set runtime permissions (storage & bootstrap/cache)
+RUN chown -R www-data:www-data $APP_HOME/storage $APP_HOME/bootstrap/cache \
+ && chmod -R 775 $APP_HOME/storage $APP_HOME/bootstrap/cache
+
+# Environment defaults (override at runtime)
+ENV APP_ENV=production \
+    APP_DEBUG=false \
+    LOG_CHANNEL=stderr \
+    PHP_FPM_CLEAR_ENV=0
+
+# Optimize Laravel (run as www-data). These commands run at image build time.
+# If your app requires environment-specific values for config caching, you may prefer to run these at container start.
+USER www-data
+RUN php artisan config:cache || true \
+ && php artisan route:cache || true \
+ && php artisan view:cache || true
+
+USER root
+
+# Expose php-fpm port
+EXPOSE 9000
+
+# Use the built-in php-fpm process
+CMD ["php-fpm"]
