@@ -1,12 +1,5 @@
 The process of building small independent api as a service then connecting together as a single app
 
-Team roles (example)
-
-    Dev A — API Gateway + CI/CD
-    Dev B — User Service + DB / auth (me)
-    Dev C — Email Service + Template Engine
-    Dev D — Push Service + Template Service + Monitoring
-
 2. User Service
 
     Responsible for user contact info and preferences.
@@ -21,7 +14,6 @@ Team roles (example)
     GET /v1/users/{user_id}
 
     GET /v1/users/{user_id}/preferences
-
     expose /health
 
     Shared cache: Redis for caching preferences & rate-limits.
@@ -214,7 +206,5 @@ php artisan migrate:fresh
 
 ```
 
-Change all id to uuid and also the foreign keys
 More: https://dev.to/adnanbabakan/implement-uuid-primary-key-in-laravel-and-its-benefits-55o3
 Spatie permission: https://spatie.be/docs/laravel-permission/v6/advanced-usage/uuid
-Advance Uuid: https://medium.com/@laravelprotips/uuid-in-laravel-a-simple-guide-55cdc4642d43
