@@ -1,7 +1,7 @@
 # Dockerfile - Development image for Laravel (PHP-FPM)
 # Used for local development with SQLite database
 
-FROM php:8.2-fpm-alpine
+FROM php:8.3-fpm-alpine
 
 # System deps for typical Laravel apps (adjust as needed)
 RUN apk add --no-cache \
