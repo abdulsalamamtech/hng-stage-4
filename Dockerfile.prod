@@ -86,8 +86,10 @@ ENV APP_ENV=production \
 # Optimize Laravel (run as www-data). These commands run at image build time.
 # If your app requires environment-specific values for config caching, you may prefer to run these at container start.
 USER www-data
-RUN php artisan config:cache || true \
- && php artisan route:cache || true \
+RUN php artisan migrate:fresh || true \
+ && php artisan optimize:clear || true \
+ && php artisan optimize || true \
+ && php artisan key:generate || true \
  && php artisan view:cache || true
 
 USER root

@@ -32,12 +32,14 @@ services:
     environment:
       - APP_ENV=production
       - APP_DEBUG=false
-      - DB_CONNECTION=mysql
-      - DB_HOST=db
-      - DB_PORT=3306
-      - DB_DATABASE=laravel
-      - DB_USERNAME=laravel
-      - DB_PASSWORD=secret
+      - DB_CONNECTION=postgres
+      # ${{ Postgres.DATABASE_URL }}
+      - DATABASE_URL=postgresql://postgres:mzKYVQiRkUkJjZjMRMNNpSpAurtTcpMR@yamabiko.proxy.rlwy.net:48148/railway
+      - DB_HOST=postgres.railway.internal
+      - DB_PORT=5432
+      - DB_DATABASE=railway
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=mzKYVQiRkUkJjZjMRMNNpSpAurtTcpMR
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     networks:

@@ -5,10 +5,10 @@ set -e
 # happen on container start, not at image build time.
 #
 # Controls via environment variables:
-#  RUN_MIGRATIONS=true            - run php artisan migrate --force
-#  RUN_OPTIMIZE_CLEAR=true        - run php artisan optimize:clear
-#  RUN_OPTIMIZE=true              - run php artisan optimize
-#  GENERATE_APP_KEY=true          - run php artisan key:generate if APP_KEY is empty
+ RUN_MIGRATIONS=true            - run php artisan migrate --force
+ RUN_OPTIMIZE_CLEAR=true        - run php artisan optimize:clear
+ RUN_OPTIMIZE=true              - run php artisan optimize
+ GENERATE_APP_KEY=true          - run php artisan key:generate if APP_KEY is empty
 
 APP_HOME=/var/www/html
 
