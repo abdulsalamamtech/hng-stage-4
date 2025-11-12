@@ -7,17 +7,77 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## About Project
+
+Stage 4 Backend Task: Microservices & Message QueuesTask
+Title: Distributed Notification System
+
+This project focus on building a notification system that sends emails and push notifications using separate microservices. Each service communicate asynchronously through a message queue (e.g., RabbitMQ or Kafka).
+
+Task Execution: We worked as a group in teams of 4.
+
+This project contain a CI/CD workflow for deployment.
+
+#### User Service
+
+    Responsible for user contact info and preferences.
+    DB: PostgreSQL.
+
+    Responsibilities:
+
+    store user emails, push_tokens, notification_preferences (opt_in/out).
+
+    auth/login/permissions.
+
+    REST API for lookups:
+
+    GET /v1/users/{user_id}
+
+    GET /v1/users/{user_id}/preferences
+    expose /health
+
+    Shared cache: Redis for caching preferences & rate-limits.
+
+![](./docs/user-service-database-design.png)
+
+### Deployment
+
+```sh
+
+git clone https://github.com/abdulsalamamtech/hng-stage-4
+cd hng-stage-4
+
+cp .env.example .env
+
+composer install
+npm install
+
+php artisan migrate
+composer dev
+
+```
+
+## Documentation endpoint
+
+This project used the open API documentation library for Laravel.
+
+production-url: is the production url where the application is running.
+
+Access the OpenAPI Documentation: (http://production-url/docs/api)
+
+![](./docs/api-docs-image.png)
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+-   [Simple, fast routing engine](https://laravel.com/docs/routing).
+-   [Powerful dependency injection container](https://laravel.com/docs/container).
+-   Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
+-   Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
+-   Database agnostic [schema migrations](https://laravel.com/docs/migrations).
+-   [Robust background job processing](https://laravel.com/docs/queues).
+-   [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
@@ -33,14 +93,14 @@ We would like to extend our thanks to the following sponsors for funding Laravel
 
 ### Premium Partners
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+-   **[Vehikl](https://vehikl.com)**
+-   **[Tighten Co.](https://tighten.co)**
+-   **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
+-   **[64 Robots](https://64robots.com)**
+-   **[Curotec](https://www.curotec.com/services/technologies/laravel)**
+-   **[DevSquad](https://devsquad.com/hire-laravel-developers)**
+-   **[Redberry](https://redberry.international/laravel-development)**
+-   **[Active Logic](https://activelogic.com)**
 
 ## Contributing
 
