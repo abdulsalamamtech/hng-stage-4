@@ -1,0 +1,68 @@
+
+### variable
+@test = http://localhost:8000
+@live = https://api.example.com
+@url = {{test}}
+
+### Get all users
+GET {{url}}/api/v1/users?limit=20&page=1
+
+### Get user by ID
+GET {{url}}/api/v1/users/10
+
+### Create new user
+POST {{url}}/api/v1/users
+Content-Type: application/json
+
+{
+    "name": "My User",
+    "email": "user1111@example.com",
+    "password": "securepassword",
+    "push_token": "queue_token"
+}
+
+### Update user
+PUT {{url}}/api/v1/users/16
+Content-Type: application/json
+
+{
+    "name": "Updated Name",
+    "preference": {
+        "email": true,
+        "push": false
+    }
+}
+
+### Delete user
+DELETE {{url}}/api/v1/users/12
+
+
+
+### Register new user
+POST {{url}}/api/auth/register
+Content-Type: application/json
+
+{
+    "name": "My User",
+    "email": "mainuser@example.com",
+    "password": "securepassword",
+    "push_token": "queue_token"
+}
+
+
+### Login user
+POST {{url}}/api/auth/login   
+Content-Type: application/json
+
+{
+    "email": "mainuser@example.com",
+    "password": "securepassword"
+}   
+
+
+### Test route
+GET {{url}}/api/test
+
+
+### Test route
+GET {{url}}/api/health
