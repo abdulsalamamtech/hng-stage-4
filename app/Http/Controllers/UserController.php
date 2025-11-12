@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
@@ -54,7 +55,7 @@ class UserController extends Controller
         $data['password'] = hash('sha256', $data['password']);
         $user = User::create($data);
         // preference
-        $user->preference->create([
+        $user->preference()->create([
             'email' => true,
             'push' => true
         ]);
@@ -84,14 +85,22 @@ class UserController extends Controller
             return $this->sendError('User not found', [], 404);
         }
 
+        // if it's the user's own id or admin
+        if (Auth::user()) {
+            if ($request->user()?->id !== $user->id || $request->user()->email !== 'user@example.com') {
+                return $this->sendError('Unauthorized', [], 403);
+            }
+        }
+
+
         $data = $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $id,
             'password' => 'sometimes|required|string|min:8',
             'push_token' => 'string',
-            'preference' => 'array',
-            'preference.email' => 'nullable|boolean',
-            'preference.push' => 'nullable.boolean',
+            'preference' => 'nullable|array',
+            'preference.email' => 'nullable|boolean:strict',
+            'preference.push' => 'nullable|boolean:strict',
         ]);
 
         $user->update($data);
@@ -107,7 +116,7 @@ class UserController extends Controller
      */
     public function destroy(string $id)
     {
-        $user = User::find($id);
+        $user = User::findOrFail($id);
         if (!$user) {
             return $this->sendError('User not found', [], 404);
         }
