@@ -92,8 +92,13 @@ RUN php artisan config:cache || true \
 
 USER root
 
+# Copy entrypoint and make executable
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 # Expose php-fpm port
 EXPOSE 9000
 
-# Use the built-in php-fpm process
+# Use entrypoint to run runtime tasks, then start php-fpm
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["php-fpm"]
