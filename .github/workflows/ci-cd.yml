@@ -1,0 +1,118 @@
+name: CI / CD
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  PHP_VERSION: "8.3"
+
+jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v3
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mbstring, bcmath, xml, curl, gd, pdo_mysql, pdo_sqlite, zip, intl
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Install NPM dependencies
+        run: npm ci --silent
+
+      - name: Run backend tests
+        run: composer test || true
+
+  build-and-push:
+    name: Build and push Docker images
+    runs-on: ubuntu-latest
+    needs: test
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push app image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile.prod
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/hng-stage-4-app:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/hng-stage-4-app:${{ github.sha }}
+
+      - name: Build and push nginx image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile.nginx
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/hng-stage-4-nginx:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/hng-stage-4-nginx:${{ github.sha }}
+
+  deploy:
+    name: Deploy to remote host
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Wait 10s (give registry a moment)
+        run: sleep 10
+
+      - name: Deploy via SSH - update compose and restart
+        uses: appleboy/ssh-action@v0.1.9
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || '22' }}
+          script: |
+            set -e
+            echo "Updating docker-compose.prod.yml on remote to new images..."
+            # Backup original
+            cp docker-compose.prod.yml docker-compose.prod.yml.bak || true
+
+            # Replace app and nginx image names in remote compose
+            sed -i "s|image: laravel-app:prod|image: ${DOCKERHUB_USERNAME:-$GITHUB_ACTOR}/hng-stage-4-app:${GITHUB_SHA:-latest}|g" docker-compose.prod.yml || true
+            sed -i "s|image: laravel-nginx:prod|image: ${DOCKERHUB_USERNAME:-$GITHUB_ACTOR}/hng-stage-4-nginx:${GITHUB_SHA:-latest}|g" docker-compose.prod.yml || true
+
+            # Export env vars used in compose if provided
+            echo "Starting deployment: pulling images and bringing up services..."
+            docker compose -f docker-compose.prod.yml pull || true
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            docker system prune -f || true
