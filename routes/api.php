@@ -11,6 +11,7 @@ Route::prefix('v1')->group(function () {
 });
 
 
+
 // Auth Routes
 Route::prefix('auth')->group(function () {
     // login

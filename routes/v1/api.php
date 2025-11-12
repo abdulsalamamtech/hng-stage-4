@@ -1,13 +1,22 @@
 <?php
 
 use App\Http\Controllers\UserController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 
-// protected route
-Route::middleware('auth:sanctum')->group(function () {
-    // User resource routes
-    Route::apiResource('users', UserController::class)
-        ->only(['index', 'show', 'update']);
-});
+
+
+// index
+Route::get('/users', [UserController::class, 'index']);
+
+// store
+Route::post('/users', [UserController::class, 'store']);
+
+// show
+Route::get('/users/{user:id}', [UserController::class, 'show']);
+
+// update
+Route::put('/users/{user:id}', [UserController::class, 'update']);
+
+// delete
+Route::delete('/users/{user:id}', [UserController::class, 'destroy']);
